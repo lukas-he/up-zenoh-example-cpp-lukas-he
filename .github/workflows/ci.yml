@@ -9,47 +9,49 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
+      - name: Fetch up-zenoh-example-cpp conan recipe
+        uses: actions/checkout@v4
+        with:
+          path: up-zenoh-example-cpp
+
       - name: Install Conan
         id: conan
         uses: turtlebrowser/get-conan@main
         with:
           version: 2.3.2
 
-      - name: Configure conan profile
+      - name: Install conan CI profile
         shell: bash
         run: |
           conan profile detect
+          cp up-zenoh-example-cpp/.github/workflows/ci_conan_profile "$(conan profile path default)"
           conan profile show
-
-      - name: Fetch up-zenoh-example-cpp conan recipe
-        uses: actions/checkout@v4
-        with:
-          path: up-zenoh-example-cpp
-          repository: eclipse-uprotocol/up-zenoh-example-cpp
 
       - name: Fetch up-cpp conan recipe
         uses: actions/checkout@v4
         with:
           path: up-conan-recipes
-          repository: eclipse-uprotocol/up-conan-recipes
+          repository: lukas-he/up-conan-recipes-lukas-he
+          ref: update-recipe-versions-alpha4
 
       - name: Build up-core-api conan recipe
         shell: bash
         run: |
-          conan create --version 1.6.0 up-conan-recipes/up-core-api/release
+          conan create --version 1.6.0-alpha4 up-conan-recipes/up-core-api/release
 
       - name: Build up-cpp conan recipe
         shell: bash
         run: |
-          conan create --version 1.0.1-rc1 --build=missing up-conan-recipes/up-cpp/release
+          conan create --build=missing up-conan-recipes/up-cpp/developer 
+
 
       - name: Build up-transport-socket-cpp recipe
         shell: bash
         run: |
-          conan create --version 1.0.0-dev --build=missing up-conan-recipes/up-transport-socket-cpp/developer
+          conan create --build=missing up-conan-recipes/up-transport-socket-cpp/developer
 
       - name: Build the project
         shell: bash
